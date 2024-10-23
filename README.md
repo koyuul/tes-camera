@@ -15,3 +15,9 @@ TODO: Format this later...
   - once added, you can connect by typing `ssh mendel@[ YOUR IP HERE ]`, eg `ssh mendel@10.0.0.214`
   - you can use the remote explorer extension on vscode to open the system as a vscode project. download the extension on vscode and create a new ssh remote and use the ssh command above
     - i reccomend to try connecting thru mdt first, then ssh in console, then connect in vscode
+- How to build / generate / run files:
+  - Run the commands in this setting
+    - `cd build`
+    - `cmake ..`
+    - `cd ..`
+    - `./build/bin/tes-camera`
