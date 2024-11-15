@@ -10,6 +10,8 @@ add_executable(tes-camera
     src/main.cpp
     # include future executables here ...
     src/client_socket.cpp
+        src/python/python_executer.h
+        src/python/python_executer.cpp
 )
 
 # target_include_directories(tes-camera PRIVATE include) # Include future header files...

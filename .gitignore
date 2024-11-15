@@ -1,5 +1,8 @@
 # Ignore build folder
 /build/
+.idea/
+cmake-build-debug/
+.DS_Store
 
 
 /dev/socket_dev_server
