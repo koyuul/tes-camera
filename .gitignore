@@ -1,5 +1,5 @@
 # Ignore build folder
 /build/
-
-
+*.db
+*.db-journal
 /dev/socket_dev_server

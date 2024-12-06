@@ -6,15 +6,22 @@ set(CMAKE_CXX_STANDARD 20) # Utilize C++ 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Find SQLite3 library and headers
+find_library(SQLITE3_LIB sqlite3)
+find_path(SQLITE3_INCLUDE_DIR sqlite3.h)
+
 add_executable(tes-camera
     src/main.cpp
     # include future executables here ...
     src/client_socket.cpp
+    src/database_handler.cpp
 )
 
-# target_include_directories(tes-camera PRIVATE include) # Include future header files...
+# Include future header files...
+# target_include_directories(tes-camera PRIVATE include) 
 
-# target_link_libraries(tes-camera LIBRARYNAME) use later to add external libraries
+# Link external librarys here
+target_link_libraries(tes-camera PRIVATE ${SQLITE3_LIB})
 
 set_target_properties(tes-camera PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin

@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
                     std::string success = "CONNECT_SUCCESS";
                     if (buffer == success)
                     {
-                        const char *response = "IMAGE|STANDARD_CAPTURE";
+                        const char *response = "STD_CAPTURE|1000|1732293863";
                         send(new_socket, response, strlen(response), 0);
                     }
                 }
