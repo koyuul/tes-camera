@@ -1,12 +1,82 @@
 import sqlite3
+import os
+import time
+from datetime import datetime, timezone
 
 class DatabaseHandler:
-    def __init__(self):
+    def __init__(self, db_path):
         try:
-            self.db = sqlite3.connect("/home/mendel/tes-camera/image_info.db")
+            self.db = sqlite3.connect(db_path)
+            self.cursor = self.db.cursor()
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS metadata (
+                    main_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    image_id TEXT,
+                    image_group INTEGER,
+                    image_path TEXT,
+                    saved_epoch INTEGER,
+                    camera_source INTEGER,
+                    location_prediction TEXT, -- This should change based on what location prediction features we do
+                    has_earth INTEGER, -- SQLite doesnt have integers, so store this as 1=True 0=False
+                    has_space INTEGER -- SQLite doesnt have integers, so store this as 1=True 0=False
+                )
+            ''')
+            self.db.commit()
         except sqlite.Error as e:
-            print(f"Databse connectio failed: {e}")
-        
+            print(f"Database connection failed: {e}")
+    
+    def _generate_image_group(self):
+        previous_image_group = self.cursor.execute("SELECT MAX(image_group) FROM metadata").fetchone()
+        image_group = previous_image_group[0]+1 if previous_image_group is not None and previous_image_group[0] is not None else 1
+        return image_group
+
+    def _generate_image_folder(self):
+        image_folder = f"{os.path.expanduser('~/captures')}/{self._generate_image_group()}"
+        os.makedirs(image_folder, exist_ok=True)
+        return image_folder
+
+    def save_images(self, esp32_uart_connection, enable_mask, timeout_seconds=10):
+        # Generate save path
+        image_folder = self._generate_image_folder()
+        image_group = self._generate_image_group()
+
+        # Save each image over UART
+        mask_indices = [i for i, bit in enumerate(enable_mask) if bit == '1']
+        for i in mask_indices:
+            # Save image
+            image_id = f"{image_group}_{i}"
+            image_path = f"{image_folder}/{image_id}.jpg"
+            with open(image_path, 'wb') as f:
+                start_time = time.time()
+                while True:
+                    chunk = esp32_uart_connection.read(512)  # Try reading right away!
+                    if chunk:
+                        if b'EOF' in chunk:
+                            eof_index = chunk.find(b'EOF')
+                            f.write(chunk[:eof_index])  # Only write up to 'EOF'
+                            break
+                        f.write(chunk)
+                        start_time = time.time()  # reset timeout every time we receive data
+                    else:
+                        if time.time() - start_time > timeout_seconds:
+                            print(f"[HOST] Timeout while receiving image {image_id}")
+                            break
+                        time.sleep(0.01)  # small sleep to prevent CPU spin (important!)
+
+                print(f"[HOST] Received image {image_id}")
+                esp32_uart_connection.reset_input_buffer() # clear any leftovers before next file
+
+            # Enter image metadata into the metadata table.
+            self.cursor.execute(
+                (
+                    "INSERT INTO metadata(image_id, image_group, saved_epoch, camera_source, image_path) "
+                    "VALUES(?, ?, ?, ?, ?)"
+                ),
+                ( image_id, image_group, int(datetime.now(tz=timezone.utc).timestamp()), i, image_path)
+            )
+            self.db.commit()
+        return True
+
     def retrieve(self, args):
         self.accepted_arguments = {
             "image_id": None, 
