@@ -1,6 +1,9 @@
 # tes-camera
 SJSU 2024-25 CMPE/SE Senior Project - TES camera board and ML image processing
 
+## purpose
+- This codebase is meant to host the files required to operate the TES camera board. The user notes below detail the hardware setup, and the operational use cases can found on the GitHUb Repo Wiki
+
 ## user notes
 - Overview:
   - Raspberry Pi 5 connects to an ESP-32S, which controls 3 ArduCam MEGA 3MP cameras
