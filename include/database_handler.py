@@ -22,7 +22,7 @@ class DatabaseHandler:
                 )
             ''')
             self.db.commit()
-        except sqlite.Error as e:
+        except sqlite3.Error as e:
             print(f"Database connection failed: {e}")
     
     def _generate_image_group(self):
@@ -35,7 +35,7 @@ class DatabaseHandler:
         os.makedirs(image_folder, exist_ok=True)
         return image_folder
 
-    def save_images(self, esp32_uart_connection, enable_mask, timeout_seconds=10):
+    def save_images(self, connection_manager, enable_mask, timeout_seconds=10):
         # Generate save path
         image_folder = self._generate_image_folder()
         image_group = self._generate_image_group()
@@ -49,22 +49,20 @@ class DatabaseHandler:
             with open(image_path, 'wb') as f:
                 start_time = time.time()
                 while True:
-                    chunk = esp32_uart_connection.read(512)  # Try reading right away!
+                    chunk = connection_manager.read_bytes(512, timeout_seconds)
                     if chunk:
                         if b'EOF' in chunk:
                             eof_index = chunk.find(b'EOF')
-                            f.write(chunk[:eof_index])  # Only write up to 'EOF'
+                            f.write(chunk[:eof_index])
                             break
                         f.write(chunk)
-                        start_time = time.time()  # reset timeout every time we receive data
+                        start_time = time.time()
                     else:
                         if time.time() - start_time > timeout_seconds:
                             print(f"[HOST] Timeout while receiving image {image_id}")
                             break
-                        time.sleep(0.01)  # small sleep to prevent CPU spin (important!)
-
+                        time.sleep(0.01)
                 print(f"[HOST] Received image {image_id}")
-                esp32_uart_connection.reset_input_buffer() # clear any leftovers before next file
 
             # Enter image metadata into the metadata table.
             self.cursor.execute(
@@ -87,14 +85,14 @@ class DatabaseHandler:
 
         for i in range(0, len(args), 2):
             key = args[i]
-            if key in accepted_arguments:
-                accepted_arguments[key] = int(arguments[i+1])
+            if key in self.accepted_arguments:
+                self.accepted_arguments[key] = int(self.arguments[i+1])
         
         self.query(
-            accepted_arguments["image_id"],
-            accepted_arguments["request_epoch"],
-            accepted_arguments["capture_epoch"],
-            accepted_arguments["look_before_epoch"]
+            self.accepted_arguments["image_id"],
+            self.accepted_arguments["request_epoch"],
+            self.accepted_arguments["capture_epoch"],
+            self.accepted_arguments["look_before_epoch"]
         )
     
     def query(

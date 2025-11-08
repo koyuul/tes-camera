@@ -1,5 +1,5 @@
 from machine import Pin, SPI, reset, UART
-from camera import *
+from include.camera import *
 import os
 fm = FileManager()
 

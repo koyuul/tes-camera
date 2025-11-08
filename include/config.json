@@ -1,0 +1,16 @@
+{
+  "wifi": {
+    "host": "192.168.50.1",
+    "port": 5000,
+    "init_timeout": 30
+  },
+  "uart": {
+    "port": "/dev/serial0",
+    "baudrate": 115200
+  },
+  "general": {
+    "listen_timeout": 60
+  }
+}
+
+
