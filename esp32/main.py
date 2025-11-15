@@ -58,13 +58,13 @@ def process(cmd):
 
     if command == "CONNECT": # Exists separately to prevent hanging if one or more cameras can't connect
         enable_mask = args[0]
-        resolution = args[1]
+        resolution = args[1] if len(args) > 1 else '1280x720'
         if resolution not in Camera.valid_3mp_resolutions:
             conn.sendHost("[ESP]: CONNECT failed. Resolution not valid for cameras.")
             return
         spi = SPI(2, baudrate=8000000, polarity=0, phase=0, bits=8, firstbit=0, sck=Pin(18), mosi=Pin(23), miso=Pin(19))
         cs_pins = [Pin(16, Pin.OUT), Pin(17, Pin.OUT), Pin(4, Pin.OUT)]
-        cams = MultiCamera(spi, cs_pins, resolution, uart)
+        cams = MultiCamera(spi, cs_pins, resolution, conn)
         conn.sendHost("[ESP]: Cameras connected successfully!")
 
     elif command == "CAPTURE":

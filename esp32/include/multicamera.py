@@ -1,12 +1,11 @@
-from machine import Pin, SPI, reset, UART
 from include.camera import *
 import os
 fm = FileManager()
 
 class MultiCamera:
-    def __init__(self, spi, cs_pins, resolution, uart):
+    def __init__(self, spi, cs_pins, resolution, conn):
         self.ALL = '1' * len(cs_pins)
-        self.uart = uart
+        self.conn = conn
         self.cams = {}
         
         for i, pin in enumerate(cs_pins):
@@ -25,17 +24,20 @@ class MultiCamera:
             cam.cs.on()
         sleep_ms(50)
         
-    def send_over_uart(self, file_name):
+    def send_image(self, file_name):
         try:
-            print("Attempting file transfer over UART...")
+            print("Attempting file transfer...")
             with open(file_name, 'rb') as f:
+                if self.conn.mode == "wifi":
+                    chunk_size = 8192 # larger chunk size for WiFi
+                else:
+                    chunk_size = 512  # smaller chunk size for UART
                 while True:
-                    chunk = f.read(512)
+                    chunk = f.read(chunk_size)
                     if not chunk:
                         break
-                    self.uart.write(chunk)
-            
-            self.uart.write(b'EOF')
+                    self.conn.sendHost(chunk)  # sendHost will use WiFi or UART
+            self.conn.sendHost(b'EOF')
             print("File transferred!")
         except Exception as e:
             print("Error sending file: ", e)
@@ -53,14 +55,15 @@ class MultiCamera:
             sleep_ms(50)
             
             file_name = f"{i}.jpg"
-            print(f"[ESP]: Saving image from cam {i} to {file_name}")
             current_cam.save_jpg(file_name)
             file_names.append(file_name)
-            self.send_over_uart(file_name)
+            self.send_image(file_name)
             os.remove(file_name)
+            sleep_ms(1000)
+            print(f"[ESP]: Saving image from cam {i} to {file_name}")
         
-        capture_status = "Captured " + ", ".join(file_names) + "\n"
-        self.uart.write(capture_status.encode())
+        #capture_status = "Captured " + ", ".join(file_names) + "\n"
+        #self.conn.sendHost(capture_status)        
 
     def set_resolution(self, resolution, enable_mask):
         cam_indices = self._mask_to_indices(enable_mask)

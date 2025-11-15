@@ -172,7 +172,11 @@ class ConnectionManager:
     """
     def sendHost(self, message):
         try:
-            data = (message.strip() + "\n").encode("utf-8")  # format as bytes
+            if isinstance(message, str):
+                data = (message + "\n").encode("utf-8")
+            else:
+                data = message
+            
             if self.mode == "wifi" and self.wifi_socket:
                 self.wifi_socket.send(data)
             elif self.mode == "uart" and self.uart:
