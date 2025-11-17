@@ -13,11 +13,6 @@ def run(): #TODO: make this close the socket cleanly
     print("[HOST]: Connecting to ESP32...")
     conn = ConnectionManager()
 
-    # Request ESP32 connect to cameras. Kept separate in case a camera stops responding and needs to be disabled.
-    # print("[HOST]: Connecting ESP32 to cameras...")
-    # conn.send("CONNECT:111,320x240")
-    # conn.listen()
-
     # Input loop
     print("[HOST]: Entering input loop...")
     try:
