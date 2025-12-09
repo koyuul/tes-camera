@@ -103,12 +103,18 @@ class ConnectionManager:
         try:
             self.uart = serial.Serial(port, baudrate=baud)
             self.mode = "uart"
+            time.sleep(1)
 
             # Simple handshake
-            self.send("PING")
-            resp = self.listen()
-            if resp == "PONG":
+            print("[UART]: waiting for PING")
+            ping = self.listen()
+            if ping == "PING":
+                print("[UART]: got PING, sending PONG")
+                self.send("PONG")
                 return True
+            else:
+                print("[UART]: No PING received")
+                return False
         except Exception as e:
             print(f"[UART Error]: {e}")
             sys.exit(1)
