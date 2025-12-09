@@ -1,7 +1,6 @@
 """
 NEXT STEPS:
 - save resolutions
-- save deactivated cams
 """
 from machine import Pin, SPI, reset, UART
 from include.camera import *

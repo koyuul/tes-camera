@@ -10,6 +10,9 @@
   },
   "general": {
     "listen_timeout": 60
+  },
+  "esp32_config": {
+    "camera_health": 111
   }
 }
 
