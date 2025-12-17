@@ -70,3 +70,43 @@ class MultiCamera:
         for i in cam_indices:
             self.cams[i].resolution = resolution
         return f"[ESP]: Set resolution {resolution} on cams: {cam_indices}"
+
+    def health_check(self, enable_mask):
+        """
+        Ping each camera indicated by enable_mask (bitstring like '101').
+        Returns dict {index: True/False} and sends a status string to host
+        """
+        results = {}
+        selected = self._mask_to_indices(enable_mask)
+        for i in selected:
+            cam = self.cams.get(i)
+            if cam is None:
+                results[i] = False
+                continue
+            try:
+                # Prefer explicit ping/test API if available
+                if hasattr(cam, "ping"):
+                    ok = bool(cam.ping())
+                elif hasattr(cam, "test"):
+                    ok = bool(cam.test())
+                elif hasattr(cam, "check"):
+                    ok = bool(cam.check())
+                else:
+                    # Fallback: perform a quick capture to verify camera responds
+                    self._free_up_cameras()
+                    cam.capture_jpg()
+                    sleep_ms(50)
+                    ok = True
+                results[i] = bool(ok)
+            except Exception as e:
+                print(f"[MULTI] Health check cam {i} failed: {e}")
+                results[i] = False
+            sleep_ms(50)
+
+        status_parts = [f"cam{idx}={'OK' if ok else 'FAIL'}" for idx, ok in sorted(results.items())]
+        status = "[ESP]: HEALTH_CHECK: " + ", ".join(status_parts)
+        try:
+            self.conn.sendHost(status)
+        except Exception as e:
+            print(f"[MULTI] Failed to send health status: {e}")
+        return results

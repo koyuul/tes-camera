@@ -1,7 +1,3 @@
-"""
-NEXT STEPS:
-- save resolutions
-"""
 from machine import Pin, SPI, reset, UART
 from include.camera import *
 from include.multicamera import *
